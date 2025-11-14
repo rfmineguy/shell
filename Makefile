@@ -1,7 +1,7 @@
 OUT := out
 SRC := src
 BIN := main
-SOURCES := $(SRC)/*.c
+SOURCES := $(SRC)/*.c $(SRC)/**/*.c
 
 .PHONY: clean always build
 always:
