@@ -82,6 +82,8 @@ static void shell_tokenize(shell_state *state, shell_expr *out_expr) {
       curr_cmd.tokens[curr_cmd.tokens_size++] = (shell_token) {
         .begin = state->raw_input + i, .length = end - i, .type = STT_ID
       };
+      state->raw_input[end] = 0;
+      curr_cmd.argv[curr_cmd.tokens_size - 1] = state->raw_input + i;
       i += end - i;
       state_ = 0;
       continue;
