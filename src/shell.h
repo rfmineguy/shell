@@ -94,4 +94,8 @@ int shell_is_cmd_builtin(shell_cmd cmd);
  */
 void shell_expr_debug(shell_expr cmd);
 
+#ifdef EXIT_BUILTIN
+int shell_exit();
+#endif
+
 #endif

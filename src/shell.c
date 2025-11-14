@@ -19,6 +19,7 @@
 
 shell_builtin shell_builtins[10] = {
   [BUILTIN_ECHO] = {.callback = builtin_echo, .cmd_name = "echo"},
+  [BUILTIN_EXIT] = {.callback = builtin_exit, .cmd_name = "exit"},
   0
 };
 
@@ -150,7 +151,7 @@ int shell_prompt(shell_state *state, shell_expr *out_expr) {
 }
 
 static int shell_run_builtin(shell_cmd cmd, int index) {
-  if (!shell_builtins[index].callback) assert(0 && "Shell builtin not implemented");
+  if (!shell_builtins[index].callback) return 0;
   return shell_builtins[index].callback(cmd.tokens_size, cmd.argv);
 }
 
@@ -210,4 +211,8 @@ void shell_expr_debug(shell_expr expr) {
     }
   }
   printf("\n");
+}
+
+int shell_exit() {
+  exit(0);
 }
