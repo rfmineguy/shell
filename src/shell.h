@@ -43,6 +43,10 @@ typedef struct {
     shell_token_type redirection_type;
   } a[MAX_COMMAND_CHAIN];
   int commands_size;
+
+  // errors
+  const char* error;
+  int errloc;
 } shell_expr;
 
 /*

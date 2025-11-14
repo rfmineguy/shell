@@ -26,7 +26,10 @@ static inline bool isidchar(char c) {
   return c == '-' || isalnum(c) || c == '.' || c == '=';
 }
 
-static void shell_tokenize(shell_state *state, shell_expr *out_expr) {
+// Return
+//  0 - no error
+//  1 - syntax error
+static int shell_tokenize(shell_state *state, shell_expr *out_expr) {
   int state_ = STATE_NORM;
   shell_cmd curr_cmd = {0};
   for (size_t i = 0; i < state->raw_input_size;) {
@@ -94,6 +97,7 @@ static void shell_tokenize(shell_state *state, shell_expr *out_expr) {
         fprintf(stderr, "Unmatched quote\n");
         out_expr->error = "Unmatched quote";
         out_expr->errloc = end;
+        return 1;
       }
       curr_cmd.tokens[curr_cmd.tokens_size++] = (shell_token) {
         .begin = state->raw_input + i + 1, .length = end - i - 1, .type = STT_QUOTED_STRING,
@@ -118,8 +122,13 @@ static void shell_tokenize(shell_state *state, shell_expr *out_expr) {
     }
     i++;
   }
+  return 0;
 }
 
+// @Note: inherited from shell_tokenize
+// Return
+//  0 - no error
+//  1 - syntax error
 int shell_prompt(shell_state *state, shell_expr *out_expr) {
   if (!out_expr) return -1;
   *out_expr = (shell_expr){0};
