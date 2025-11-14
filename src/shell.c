@@ -30,7 +30,7 @@ static inline bool iswhitespace(char c) {
 }
 
 static inline bool isidchar(char c) {
-  return c == '-' || isalnum(c) || c == '.' || c == '=' || c == '/';
+  return c == '-' || isalnum(c) || c == '.' || c == '=' || c == '/' || c == '_';
 }
 
 // Return
