@@ -21,6 +21,7 @@
 shell_builtin shell_builtins[10] = {
   [BUILTIN_ECHO] = {.callback = builtin_echo, .cmd_name = "echo"},
   [BUILTIN_EXIT] = {.callback = builtin_exit, .cmd_name = "exit"},
+  [BUILTIN_CD] = {.callback = builtin_cd, .cmd_name = "cd"},
   0
 };
 
