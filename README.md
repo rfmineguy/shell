@@ -2,7 +2,7 @@
 This project is an attempt at writing a custom shell from scratch in C. It is inspired by a school assignment given in a Linux course.
 
 # Features
-- [ ] Shell prompt with current directory listed
+- [x] Shell prompt with current directory listed
 - [x] Command parsing
   - [x] Redirect operators (>, >>, <, <<, |)
   - [x] Quoted strings
