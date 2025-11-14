@@ -23,6 +23,8 @@ shell_builtin shell_builtins[10] = {
   0
 };
 
+static shell_state state_singleton = {0};
+
 static inline bool iswhitespace(char c) {
   return c == ' ' || c == '\t' || c == '\n';
 }
@@ -34,18 +36,18 @@ static inline bool isidchar(char c) {
 // Return
 //  0 - no error
 //  1 - syntax error
-static int shell_tokenize(shell_state *state, shell_expr *out_expr) {
+static int shell_tokenize(shell_expr *out_expr) {
   int state_ = STATE_NORM;
   shell_cmd curr_cmd = {0};
-  for (size_t i = 0; i < state->raw_input_size;) {
+  for (size_t i = 0; i < state_singleton.raw_input_size;) {
     if (state_ == STATE_NORM) {
-      if (i == state->raw_input_size - 1) state_ = STATE_END;
-      else if (iswhitespace(state->raw_input[i])) state_ = STATE_WHITESPACE;
-      else if (state->raw_input[i] == '|') state_ = STATE_PIPE;
-      else if (state->raw_input[i] == '>') state_ = STATE_RIGHT_ARROW;
-      else if (state->raw_input[i] == '<') state_ = STATE_LEFT_ARROW;
-      else if (state->raw_input[i] == '\"') state_ = STATE_QUOTED_STRING;
-      else if (isidchar(state->raw_input[i])) state_ = STATE_ID;
+      if (i == state_singleton.raw_input_size - 1) state_ = STATE_END;
+      else if (iswhitespace(state_singleton.raw_input[i])) state_ = STATE_WHITESPACE;
+      else if (state_singleton.raw_input[i] == '|') state_ = STATE_PIPE;
+      else if (state_singleton.raw_input[i] == '>') state_ = STATE_RIGHT_ARROW;
+      else if (state_singleton.raw_input[i] == '<') state_ = STATE_LEFT_ARROW;
+      else if (state_singleton.raw_input[i] == '\"') state_ = STATE_QUOTED_STRING;
+      else if (isidchar(state_singleton.raw_input[i])) state_ = STATE_ID;
     }
     if (state_ == STATE_END) {
       out_expr->a[out_expr->commands_size].cmd = curr_cmd;
@@ -70,7 +72,7 @@ static int shell_tokenize(shell_state *state, shell_expr *out_expr) {
     }
     if (state_ == STATE_RIGHT_ARROW) {
       int count = 1;
-      if (state->raw_input[i + 1] == '>') { count++; i++; }
+      if (state_singleton.raw_input[i + 1] == '>') { count++; i++; }
 
       out_expr->a[out_expr->commands_size].cmd = curr_cmd;
       out_expr->a[out_expr->commands_size++].redirection_type = count == 1 ? STT_RARROW_SINGLE : STT_RARROW_DOUBLE;
@@ -82,7 +84,7 @@ static int shell_tokenize(shell_state *state, shell_expr *out_expr) {
     }
     if (state_ == STATE_LEFT_ARROW) {
       int count = 1;
-      if (state->raw_input[i + 1] == '<') { count++; i++; }
+      if (state_singleton.raw_input[i + 1] == '<') { count++; i++; }
 
       out_expr->a[out_expr->commands_size].cmd = curr_cmd;
       out_expr->a[out_expr->commands_size++].redirection_type = count == 1 ? STT_LARROW_SINGLE : STT_LARROW_DOUBLE;
@@ -97,30 +99,30 @@ static int shell_tokenize(shell_state *state, shell_expr *out_expr) {
       size_t end = i + 1;
 
       // skip characters until we reach the end of the quote or the input
-      while (state->raw_input[end] && state->raw_input[end] != '"') end++;
-      if (!state->raw_input[end]) {
+      while (state_singleton.raw_input[end] && state_singleton.raw_input[end] != '"') end++;
+      if (!state_singleton.raw_input[end]) {
         fprintf(stderr, "Unmatched quote\n");
         out_expr->error = "Unmatched quote";
         out_expr->errloc = end;
         return 1;
       }
       curr_cmd.tokens[curr_cmd.tokens_size++] = (shell_token) {
-        .begin = state->raw_input + i + 1, .length = end - i - 1, .type = STT_QUOTED_STRING,
+        .begin = state_singleton.raw_input + i + 1, .length = end - i - 1, .type = STT_QUOTED_STRING,
       };
-      state->raw_input[end] = 0;
-      curr_cmd.argv[curr_cmd.tokens_size - 1] = state->raw_input + i + 1;
+      state_singleton.raw_input[end] = 0;
+      curr_cmd.argv[curr_cmd.tokens_size - 1] = state_singleton.raw_input + i + 1;
       i += end - i;
       state_ = 0;
       continue;
     }
     if (state_ == STATE_ID) {
       size_t end = i;
-      while (isidchar(state->raw_input[end])) end++;
+      while (isidchar(state_singleton.raw_input[end])) end++;
       curr_cmd.tokens[curr_cmd.tokens_size++] = (shell_token) {
-        .begin = state->raw_input + i, .length = end - i, .type = STT_ID
+        .begin = state_singleton.raw_input + i, .length = end - i, .type = STT_ID
       };
-      state->raw_input[end] = 0;
-      curr_cmd.argv[curr_cmd.tokens_size - 1] = state->raw_input + i;
+      state_singleton.raw_input[end] = 0;
+      curr_cmd.argv[curr_cmd.tokens_size - 1] = state_singleton.raw_input + i;
       i += end - i;
       state_ = 0;
       continue;
@@ -130,24 +132,28 @@ static int shell_tokenize(shell_state *state, shell_expr *out_expr) {
   return 0;
 }
 
+void shell_init() {
+  shell_set_cwd(".");
+}
+
 // @Note: inherited from shell_tokenize
 // Return
 //  0 - no error
 //  1 - syntax error
-int shell_prompt(shell_state *state, shell_expr *out_expr) {
+int shell_prompt(shell_expr *out_expr) {
   if (!out_expr) return -1;
   *out_expr = (shell_expr){0};
 
-  printf("> ");
+  printf("%s > ", state_singleton.pwd);
 
   // 1. wait for input from user
-  if (state->raw_input) {
-    memset(state->raw_input, 0, state->raw_input_size);
+  if (state_singleton.raw_input) {
+    memset(state_singleton.raw_input, 0, state_singleton.raw_input_size);
   }
-  size_t linelen = getline(&state->raw_input, &state->raw_input_size, stdin);
-  state->raw_input[linelen - 1] = 0;
-  state->raw_input_size = linelen;
-  return shell_tokenize(state, out_expr);
+  size_t linelen = getline(&state_singleton.raw_input, &state_singleton.raw_input_size, stdin);
+  state_singleton.raw_input[linelen - 1] = 0;
+  state_singleton.raw_input_size = linelen;
+  return shell_tokenize(out_expr);
 }
 
 static int shell_run_builtin(shell_cmd cmd, int index) {
