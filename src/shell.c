@@ -4,6 +4,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/wait.h>
 
 #define STATE_NORM 0
 #define STATE_WHITESPACE 1
@@ -151,6 +154,18 @@ static int shell_run_builtin(shell_cmd cmd, int index) {
 }
 
 static int shell_run_non_builtin(shell_cmd cmd) {
+  int pid = fork();
+  if (pid == 0) {
+    // child
+    if (execvp(cmd.argv[0], cmd.argv) == -1) {
+      perror("failed to spawn process");
+    }
+  }
+  else {
+    int child_exit_code;
+    int wait_rv = wait(&child_exit_code);
+    return child_exit_code;
+  }
   return 1;
 }
 
@@ -164,7 +179,6 @@ int shell_run_expr(shell_expr expr) {
   int cmd_idx = 0;
   if ((cmd_idx = shell_is_cmd_builtin(cmd)) != BUILTIN_NOT)
     return shell_run_builtin(cmd, cmd_idx);
-  printf("Not a builtin\n");
   return shell_run_non_builtin(cmd);
 }
 
