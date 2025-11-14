@@ -78,3 +78,19 @@ static void shell_tokenize(shell_state *state, shell_cmd *out_cmd) {
     i++;
   }
 }
+
+int shell_prompt(shell_state *state, shell_cmd *out_cmd) {
+  if (!out_cmd) return -1;
+  *out_cmd = (shell_cmd){0};
+
+  printf("> ");
+
+  // 1. wait for input from user
+  if (state->raw_input) {
+    memset(state->raw_input, 0, state->raw_input_size);
+  }
+  size_t linelen = getline(&state->raw_input, &state->raw_input_size, stdin);
+  state->raw_input[linelen - 1] = 0;
+  shell_tokenize(state, out_cmd);
+  return 0;
+}
