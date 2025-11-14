@@ -193,7 +193,19 @@ int shell_is_cmd_builtin(shell_cmd cmd) {
 
 void shell_expr_debug(shell_expr expr) {
   printf(" || DEBUG SHELL EXPR ||\n");
-  printf("   Commands Size: %d\n", expr.commands_size);
+  for (int i = 0; i < expr.commands_size; i++) {
+    printf("%d: [", i);
+    shell_cmd cmd = expr.a[i].cmd;
+    for (int i = 0; i < cmd.tokens_size; i++) {
+      printf("%.*s", (int)cmd.tokens[i].length, cmd.tokens[i].begin);
+      if (i < cmd.tokens_size - 1) printf(", ");
+    }
+    printf("]\n");
+  }
+}
+
+void shell_expr_reconstruct(shell_expr expr) {
+  printf(" || RECONSTRUCT SHELL EXPR ||\n");
   for (int i = 0; i < expr.commands_size; i++) {
     shell_cmd cmd = expr.a[i].cmd;
     for (int i = 0; i < cmd.tokens_size; i++) {

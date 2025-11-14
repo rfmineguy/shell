@@ -94,6 +94,14 @@ int shell_is_cmd_builtin(shell_cmd cmd);
  */
 void shell_expr_debug(shell_expr cmd);
 
+/*
+ * @Desc:
+ *    Print the parsed cmd as if it was typed
+ * @Param:
+ *    cmd: shell_expr struct
+ */
+void shell_expr_reconstruct(shell_expr cmd);
+
 #ifdef EXIT_BUILTIN
 int shell_exit();
 #endif
