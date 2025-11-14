@@ -123,10 +123,17 @@ static int shell_run_non_builtin(shell_cmd cmd) {
   return 1;
 }
 
-int shell_run_cmd(shell_cmd cmd) {
+int shell_run_expr(shell_expr expr) {
+  if (expr.commands_size == 0) return 0;
+
+  // only run the first command to start out
+  shell_cmd cmd = expr.a[0].cmd;
+  if (cmd.tokens_size == 0) return 0;
+
   int cmd_idx = 0;
   if ((cmd_idx = shell_is_cmd_builtin(cmd)) != BUILTIN_NOT)
     return shell_run_builtin(cmd, cmd_idx);
+  printf("Not a builtin\n");
   return shell_run_non_builtin(cmd);
 }
 
@@ -138,7 +145,8 @@ int shell_is_cmd_builtin(shell_cmd cmd) {
 }
 
 void shell_expr_debug(shell_expr expr) {
-  printf("commands_size: %d\n", expr.commands_size);
+  printf(" || DEBUG SHELL EXPR ||\n");
+  printf("   Commands Size: %d\n", expr.commands_size);
   for (int i = 0; i < expr.commands_size; i++) {
     shell_cmd cmd = expr.a[i].cmd;
     for (int i = 0; i < cmd.tokens_size; i++) {

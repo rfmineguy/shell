@@ -64,7 +64,7 @@ int shell_prompt(shell_state* state, shell_expr* out_expr);
  *    normal : return value of the run command
  *    error  : -100
  */
-int shell_run_cmd(shell_cmd cmd);
+int shell_run_expr(shell_expr expr);
 
 /*
  * @Desc:
