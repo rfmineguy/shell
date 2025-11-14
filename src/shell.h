@@ -49,6 +49,11 @@ typedef struct {
   int errloc;
 } shell_expr;
 
+typedef struct {
+  const char* cmd_name;
+  int(*callback)(int argc, char** argv);
+} shell_builtin;
+
 /*
  * @Desc:
  *    Prompts the user for input

@@ -17,8 +17,9 @@
 #define STATE_QUOTED_STRING 6
 #define STATE_END 7
 
-int(*shell_builtins[10])(int argc, char** argv) = {
-  [BUILTIN_ECHO_IDX] = builtin_echo,
+shell_builtin shell_builtins[10] = {
+  [BUILTIN_ECHO] = {.callback = builtin_echo, .cmd_name = "echo"},
+  0
 };
 
 static inline bool iswhitespace(char c) {
@@ -149,8 +150,8 @@ int shell_prompt(shell_state *state, shell_expr *out_expr) {
 }
 
 static int shell_run_builtin(shell_cmd cmd, int index) {
-  if (!shell_builtins[index]) assert(0 && "Shell builtin not implemented");
-  return shell_builtins[index](cmd.tokens_size, cmd.argv);
+  if (!shell_builtins[index].callback) assert(0 && "Shell builtin not implemented");
+  return shell_builtins[index].callback(cmd.tokens_size, cmd.argv);
 }
 
 static int shell_run_non_builtin(shell_cmd cmd) {
@@ -158,7 +159,7 @@ static int shell_run_non_builtin(shell_cmd cmd) {
   if (pid == 0) {
     // child
     if (execvp(cmd.argv[0], cmd.argv) == -1) {
-      perror("failed to spawn process");
+      perror("rfsh");
     }
   }
   else {
@@ -177,16 +178,16 @@ int shell_run_expr(shell_expr expr) {
   if (cmd.tokens_size == 0) return 0;
 
   int cmd_idx = 0;
-  if ((cmd_idx = shell_is_cmd_builtin(cmd)) != BUILTIN_NOT)
+  if ((cmd_idx = shell_is_cmd_builtin(cmd)) != BUILTIN_NA)
     return shell_run_builtin(cmd, cmd_idx);
   return shell_run_non_builtin(cmd);
 }
 
 int shell_is_cmd_builtin(shell_cmd cmd) {
-  if (strncmp(cmd.tokens[0].begin, "echo", cmd.tokens[0].length) == 0) {
-    return BUILTIN_ECHO_IDX;
+  for (int i = 0; i < BUILTIN_LAST; i++) {
+    if (strcmp(cmd.tokens[0].begin, shell_builtins[i].cmd_name) == 0) return i;
   }
-  return BUILTIN_NOT;
+  return BUILTIN_NA;
 }
 
 void shell_expr_debug(shell_expr expr) {
