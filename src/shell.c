@@ -1,7 +1,9 @@
 #include "shell.h"
+#include "builtins.h"
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #define STATE_NORM 0
 #define STATE_WHITESPACE 1
@@ -10,6 +12,10 @@
 #define STATE_LEFT_ARROW 4
 #define STATE_ID 5
 #define STATE_END 6
+
+int(*shell_builtins[10])(int argc, char** argv) = {
+  [BUILTIN_ECHO_IDX] = builtin_echo,
+};
 
 static inline bool iswhitespace(char c) {
   return c == ' ' || c == '\t' || c == '\n';
@@ -109,6 +115,7 @@ int shell_prompt(shell_state *state, shell_expr *out_expr) {
 }
 
 static int shell_run_builtin(shell_cmd cmd, int index) {
+  if (!shell_builtins[index]) assert(0 && "Shell builtin not implemented");
   return shell_builtins[index](cmd.tokens_size, cmd.argv);
 }
 
