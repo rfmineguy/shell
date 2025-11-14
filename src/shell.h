@@ -54,16 +54,18 @@ typedef struct {
   int(*callback)(int argc, char** argv);
 } shell_builtin;
 
+void shell_init();
+
 /*
  * @Desc:
  *    Prompts the user for input
  * @Param:
- *    state: valid pointer to a state struct
+ *    out_expr: valid pointer to a shell_expr
  * @Return:
  *    0  - if there is input to parse
  *    -1 - if there is no input to parse
  */
-int shell_prompt(shell_state* state, shell_expr* out_expr);
+int shell_prompt(shell_expr* out_expr);
 
 /*
  * @Desc
