@@ -12,6 +12,7 @@ typedef enum {
   STT_ID, STT_PIPE,
   STT_LARROW_SINGLE, STT_LARROW_DOUBLE,
   STT_RARROW_SINGLE, STT_RARROW_DOUBLE,
+  STT_QUOTED_STRING,
 } shell_token_type;
 
 typedef struct {

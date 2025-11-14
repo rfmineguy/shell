@@ -11,7 +11,8 @@
 #define STATE_RIGHT_ARROW 3
 #define STATE_LEFT_ARROW 4
 #define STATE_ID 5
-#define STATE_END 6
+#define STATE_QUOTED_STRING 6
+#define STATE_END 7
 
 int(*shell_builtins[10])(int argc, char** argv) = {
   [BUILTIN_ECHO_IDX] = builtin_echo,
@@ -35,6 +36,7 @@ static void shell_tokenize(shell_state *state, shell_expr *out_expr) {
       else if (state->raw_input[i] == '|') state_ = STATE_PIPE;
       else if (state->raw_input[i] == '>') state_ = STATE_RIGHT_ARROW;
       else if (state->raw_input[i] == '<') state_ = STATE_LEFT_ARROW;
+      else if (state->raw_input[i] == '\"') state_ = STATE_QUOTED_STRING;
       else if (isidchar(state->raw_input[i])) state_ = STATE_ID;
     }
     if (state_ == STATE_END) {
@@ -82,6 +84,26 @@ static void shell_tokenize(shell_state *state, shell_expr *out_expr) {
       state_ = 0;
       continue;
     }
+    if (state_ == STATE_QUOTED_STRING) {
+      // skip quote
+      size_t end = i + 1;
+
+      // skip characters until we reach the end of the quote or the input
+      while (state->raw_input[end] && state->raw_input[end] != '"') end++;
+      if (!state->raw_input[end]) {
+        fprintf(stderr, "Unmatched quote\n");
+        out_expr->error = "Unmatched quote";
+        out_expr->errloc = end;
+      }
+      curr_cmd.tokens[curr_cmd.tokens_size++] = (shell_token) {
+        .begin = state->raw_input + i + 1, .length = end - i - 1, .type = STT_QUOTED_STRING,
+      };
+      state->raw_input[end] = 0;
+      curr_cmd.argv[curr_cmd.tokens_size - 1] = state->raw_input + i + 1;
+      i += end - i;
+      state_ = 0;
+      continue;
+    }
     if (state_ == STATE_ID) {
       size_t end = i;
       while (isidchar(state->raw_input[end])) end++;
@@ -110,8 +132,8 @@ int shell_prompt(shell_state *state, shell_expr *out_expr) {
   }
   size_t linelen = getline(&state->raw_input, &state->raw_input_size, stdin);
   state->raw_input[linelen - 1] = 0;
-  shell_tokenize(state, out_expr);
-  return 0;
+  state->raw_input_size = linelen;
+  return shell_tokenize(state, out_expr);
 }
 
 static int shell_run_builtin(shell_cmd cmd, int index) {
@@ -159,7 +181,8 @@ void shell_expr_debug(shell_expr expr) {
       case STT_LARROW_DOUBLE: printf(" << "); break;
       case STT_RARROW_DOUBLE: printf(" >> "); break;
       case STT_PIPE: printf(" | "); break;
-      case STT_ID: assert(0 && "Not a redirection type");
+      case STT_QUOTED_STRING: assert(0 && "STT_QUOTED_STRING not a redirection type");
+      case STT_ID: assert(0 && "STT_ID not a redirection type");
     }
   }
   printf("\n");
