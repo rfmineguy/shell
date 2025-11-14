@@ -1,11 +1,14 @@
 #ifndef SHELL_H
 #define SHELL_H
+#define MAX_ARGV 50
 #define MAX_TOKENS 100
+#define MAX_COMMAND_CHAIN 50
 
 #include <stdbool.h>
 #include <stddef.h>
 
 typedef enum {
+  NONE = 0,
   STT_ID, STT_PIPE,
   STT_LARROW_SINGLE, STT_LARROW_DOUBLE,
   STT_RARROW_SINGLE, STT_RARROW_DOUBLE,
@@ -29,7 +32,17 @@ typedef struct {
 
   shell_token tokens[MAX_TOKENS];
   int tokens_size;
+
+  char* argv[MAX_ARGV];
 } shell_cmd;
+
+typedef struct {
+  struct {
+    shell_cmd cmd;
+    shell_token_type redirection_type;
+  } a[MAX_COMMAND_CHAIN];
+  int commands_size;
+} shell_expr;
 
 /*
  * @Desc:
@@ -40,7 +53,18 @@ typedef struct {
  *    0  - if there is input to parse
  *    -1 - if there is no input to parse
  */
-int shell_prompt(shell_state* state, shell_cmd* out_cmd);
+int shell_prompt(shell_state* state, shell_expr* out_expr);
+
+/*
+ * @Desc
+ *    Run a command
+ * @Param
+ *    cmd: valid command struct given by shell_prompt
+ * @Return
+ *    normal : return value of the run command
+ *    error  : -100
+ */
+int shell_run_cmd(shell_cmd cmd);
 
 /*
  * @Desc:
@@ -50,6 +74,14 @@ int shell_prompt(shell_state* state, shell_cmd* out_cmd);
  * @Return:
  *    t/f depending on whether its builtin or not
  */
-bool shell_is_cmd_builtin(shell_cmd cmd);
+int shell_is_cmd_builtin(shell_cmd cmd);
+
+/*
+ * @Desc:
+ *    Echo the last entered expression in tokenized form
+ * @Param:
+ *    cmd: shell_expr struct 
+ */
+void shell_expr_debug(shell_expr cmd);
 
 #endif
