@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h>
+#include <errno.h>
 
 #define STATE_NORM 0
 #define STATE_WHITESPACE 1
@@ -233,4 +234,14 @@ void shell_expr_reconstruct(shell_expr expr) {
 
 int shell_exit() {
   exit(0);
+}
+
+int shell_set_cwd(const char* path) {
+  if (chdir(path) != 0) {
+    perror("Failed to change directory");
+    return 1;
+  }
+  // NOTE: Potentially not the best way to do this
+  getcwd(state_singleton.pwd, MAXPATHLEN);
+  return 0;
 }

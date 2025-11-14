@@ -6,6 +6,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <sys/param.h>  // MAXPATHLEN (suggested by man getcwd)
 
 typedef enum {
   NONE = 0,
@@ -22,7 +23,7 @@ typedef struct {
 } shell_token;
 
 typedef struct {
-  char* pwd;
+  char pwd[MAXPATHLEN];
   char* raw_input;
   size_t raw_input_size;
 } shell_state;
@@ -106,6 +107,10 @@ void shell_expr_reconstruct(shell_expr cmd);
 
 #ifdef EXIT_BUILTIN
 int shell_exit();
+#endif
+
+#if defined(CD_BUILTIN) || defined(SHELL_H)
+int shell_set_cwd(const char*);
 #endif
 
 #endif
