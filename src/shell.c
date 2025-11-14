@@ -94,3 +94,7 @@ int shell_prompt(shell_state *state, shell_cmd *out_cmd) {
   shell_tokenize(state, out_cmd);
   return 0;
 }
+
+bool shell_is_cmd_builtin(shell_cmd cmd) {
+  return true;
+}
